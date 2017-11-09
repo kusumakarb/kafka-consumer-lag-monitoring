@@ -1,0 +1,14 @@
+POST       /burrowAlert            controllers.HomeController.burrowPost
+GET        /ws                     controllers.WebSocketController.socket
+#GET        /spawnConsumer          controllers.HomeController.spawnFromUI
+POST       /increaseThrottle       controllers.HomeController.increaseThrottle
+POST       /increaseExecutors      controllers.HomeController.increaseExecutors
+
+GET        /                       controllers.HomeController.index
+->         /v1/posts               v1.post.PostRouter
+
+
+
+# Map static resources from the /public folder to the /assets URL path
+GET        /assets/*file        controllers.Assets.at(path="/public", file)
+
