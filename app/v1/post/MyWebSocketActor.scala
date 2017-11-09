@@ -19,31 +19,7 @@ object MyWebSocketActor {
 class MyWebSocketActor(out: ActorRef) extends Actor {
   def receive = {
     case msg: String =>
-      /*      val conf = ConfigFactory.load()
-            val burrowHost = conf.getString("props.burrow.host")
-            val burrowPort = conf.getString("props.burrow.port")
-            val apiVersion = conf.getString("props.burrow.version") + "/" +conf.getString("props.burrow.api")
-            val cluster = conf.getString("props.burrow.cluster")
-            val group = conf.getString("props.burrow.group")
 
-            val burrowInfo: String = Http("http://" +
-              burrowHost + ":" +
-              burrowPort + "/" +
-              apiVersion + "/" +
-              cluster + "/" + "consumer" + "/" +
-              group + "/" + "lag").asString.body
-
-            val responseJson: JsValue = Json.parse(burrowInfo)
-            val status: String = (responseJson \ "status" \ "status").as[String]
-            val time: Double = (responseJson \ "status" \ "partitions" \ 0 \ "end" \ "timestamp").as[Double]
-            val totalLag: Int = (responseJson \ "status" \ "totallag").as[Int]
-
-            val monitoringInfo: JsValue = Json.obj(
-              "time" -> time,
-              "lag" -> totalLag,
-              "status" -> status
-            )*/
-      //println(msg)
       val conf: Config = ConfigFactory.load()
       val bootstrapServers: String = conf.getString("props.bootstrapServers")
       import java.util.Properties
@@ -75,27 +51,22 @@ class MyWebSocketActor(out: ActorRef) extends Actor {
 
       breakable{
         while(!msg.isEmpty){
-          println(msg)
-          println("Polling...")
           val records=consumer.poll(100)
           if (records.count() == 0){
-            println("zero records")
             val infoToKeepWebsocketAlive: String = "{ \"time\":" + System.currentTimeMillis() + "," + "\"lag\":" + 0  + ", \"inputRowsPerSecond\":" + 0 +
               ", \"processedRowsPerSecond\":" + 0 + "}"
             out ! (infoToKeepWebsocketAlive.toString)
             break()
           }
-          println("BeforeFor")
+
           for (record<-records.asScala){
-            println("seektoend")
+
             lagConsumer.seekToEnd(util.Collections.singleton(lagConsumerTopicPartition))
-            println("getPosition")
+
             val latestOffset = lagConsumer.position(lagConsumerTopicPartition)
 
             val queryStat = record.value().toString
-            //println(queryStat)
             val responseJson: JsValue = Json.parse(queryStat)
-            //println(responseJson)
             val inputRowsPerSecond: Option[Double] = (responseJson \ "inputRowsPerSecond").asOpt[Double]
             val processedRowsPerSecond: Option[Double] = (responseJson \ "processedRowsPerSecond").asOpt[Double]
             val finalOffset: Option[Long] = (responseJson \ "sources" \ 0 \ "endOffset" \ "input" \ "0").asOpt[Long]
@@ -134,8 +105,6 @@ class MyWebSocketActor(out: ActorRef) extends Actor {
             lagConsumer.close()
             //Thread.sleep(50)
           }
-
-          //val jsonUI =
 
         }
       }//breakable
